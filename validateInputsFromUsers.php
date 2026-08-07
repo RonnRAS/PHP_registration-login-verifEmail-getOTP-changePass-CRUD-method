@@ -49,12 +49,23 @@ function checkInput($value, $rules, $conn = null)
             return $rules['properties'] .  " Email is already registered.";
         }
     }
+    if(isset($rules['emailMustExists'])){
+        $stmt = $conn ->prepare("SELECT email FROM tbl1_users WHERE email = ?");
+        $stmt -> bind_param('s', $value);
+        $stmt -> execute();
+        $checkEmail = $stmt->get_result();
+        
+        if($checkEmail->num_rows === 0){
+            return $rules['properties'] .  " Email is not registered.";
+        }
+    }
 }
+
+    $errors = [];
 
 
 if (isset($_POST["RegisterAccount"])) {
 
-    $errors = [];
 
     $firstName = trim($_POST['firstName']);
     $middleName = trim($_POST['middleName']);
@@ -64,6 +75,7 @@ if (isset($_POST["RegisterAccount"])) {
     $userRole = trim($_POST['userRole']);
     $registerPassword = trim($_POST['registerPassword']);
 
+    $passwordhashed = password_hash($registerPassword, PASSWORD_DEFAULT);
 
     $errors['firstName'] = checkInput($_POST['firstName'], ['properties' => 'First name', 'required' => true, 'minLength' => 2, 'lettersOnly' => true]);
     $errors['middleName'] = checkInput($_POST['middleName'], ['properties' => 'Middle name', 'required' => true, 'minLength' => 2, 'lettersOnly' => true]);
@@ -82,8 +94,6 @@ if (isset($_POST["RegisterAccount"])) {
         exit();
     }
 
-    $passwordhashed = password_hash($registerPassword, PASSWORD_DEFAULT);
-
     $stmt = $conn->prepare("INSERT INTO tbl1_users (firstName, middleName, lastName, sex, email, role_type, password) VALUES (?,?,?,?,?,?,?)");
     $stmt->bind_param('sssssss', $firstName, $middleName, $lastName, $userSex, $userEmail, $userRole, $passwordhashed);
     $stmt->execute();
@@ -94,6 +104,41 @@ if (isset($_POST["RegisterAccount"])) {
 }
 
 if (isset($_POST["loginAccount"])) {
-    $userEmail = $_POST["loginEmail"];
-    $password = $_POST["loginPassword"];
+    $loginEmail = $_POST["loginEmail"];
+    $loginPassword = $_POST["loginPassword"];
+
+    $errors['loginEmail'] = checkInput($_POST['loginEmail'], ['properties' => 'Email', 'required' => true, 'emailMustExists' => true], $conn);
+    $errors['loginPassword'] = checkInput($_POST['loginPassword'],['properties' => 'Password', 'required' => true]);
+
+    if(!empty(array_filter($errors))){
+        $_SESSION['errors'] = $errors;
+        $_SESSION['active_form'] = 'loginAccountForm';
+        $_SESSION['old'] = $_POST;
+
+        header("Location: index.php");
+        exit();
+    }
+
+    $stmt = $conn -> prepare("SELECT * FROM tbl1_users WHERE email = ?");
+    $stmt -> bind_param('s', $loginEmail);
+    $stmt -> execute();
+    $result = $stmt->get_result();
+    $userData = $result->fetch_assoc();
+
+    if (!$userData || !password_verify($loginPassword, $userData['password'])){
+        $_SESSION['errors'] = ['loginPassword' => 'Invalid Email or Password!'];
+        $_SESSION['active_form'] = 'loginAccountForm';
+        $_SESSION['old'] = $_POST;
+
+        header("Location: index.php");
+        exit();
+    }
+    
+    if($userData['role_type'] === 'Admin'){
+        header("Location: adminDashboard.php");
+    }else if($userData['role_type'] === 'User'){
+        header("Location: userDashboard.php");
+    }
+    exit();
+
 }

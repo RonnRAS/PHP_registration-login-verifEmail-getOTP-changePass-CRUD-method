@@ -7,8 +7,7 @@ $activeForm = $_SESSION['active_form'] ?? 'registrationOfAccountForm';
 $old = $_SESSION['old'] ?? [];
 session_unset();
 
-function showError($field, $errors)
-{
+function showError($field, $errors){
 
     if (!empty($errors[$field])) {
         return "<p class='errorHandler' style='color:red;'>" . htmlspecialchars($errors[$field]) . "</p>";
@@ -83,7 +82,8 @@ function showError($field, $errors)
                 <input type="radio" id="admin" name="userRole" value="admin"
                     <?= ($old['userRole'] ??  '') === 'admin' ? 'checked' : '' ?>>
                 <label for="admin">Admin</label>
-                <input type="radio" id="user" name="userRole" value="user">
+                <input type="radio" id="user" name="userRole" value="user"
+                <?= ($old['userRole'] ?? '') === 'user' ? 'checked' : '' ?>>
                 <label for="user">User</label>
                 <?= showError('userRole', $errors) ?>
             </div>
@@ -110,8 +110,9 @@ function showError($field, $errors)
             <h1>Login Account</h1>
             <div class="inputHandler">
                 <label for="loginEmail">Email</label>
-                <input type="email" id="loginEmail" name="loginEmail">
-                <p class="errorHandler"></p>
+                <input type="email" id="loginEmail" name="loginEmail" 
+                value="<?= htmlspecialchars($old['loginEmail'] ?? '') ?>">
+                <?= showError('loginEmail', $errors) ?>
             </div>
 
             <div class="inputHandler">
@@ -119,7 +120,7 @@ function showError($field, $errors)
                 <input type="password" id="loginPassword" name="loginPassword" data-target="loginPassword">
                 <input type="checkbox" class="showPassword" data-target="loginPassword">
                 <label for="showPassword">Show password</label>
-                <p class="errorHandler"></p>
+                <?= showError('loginPassword', $errors) ?>
             </div>
             <p>Don't have an account? <a href="#" onclick="showForm('registrationOfAccountForm'); return false;">Register Here</a></p>
 
