@@ -3,18 +3,11 @@ session_start();
 include "validateInputsFromUsers.php";
 
 $errors = $_SESSION['errors'] ?? [];
-$activeForm = $_SESSION['active_form'] ?? 'registrationOfAccountForm';
+$activeForm = $_SESSION['active_form'] ?? 'loginAccountForm';
 $old = $_SESSION['old'] ?? [];
 session_unset();
 
-function showError($field, $errors){
 
-    if (!empty($errors[$field])) {
-        return "<p class='errorHandler' style='color:red;'>" . htmlspecialchars($errors[$field]) . "</p>";
-    } else {
-        return "<p class='errorHandler'></p>";
-    }
-}
 
 
 
@@ -83,7 +76,7 @@ function showError($field, $errors){
                     <?= ($old['userRole'] ??  '') === 'admin' ? 'checked' : '' ?>>
                 <label for="admin">Admin</label>
                 <input type="radio" id="user" name="userRole" value="user"
-                <?= ($old['userRole'] ?? '') === 'user' ? 'checked' : '' ?>>
+                    <?= ($old['userRole'] ?? '') === 'user' ? 'checked' : '' ?>>
                 <label for="user">User</label>
                 <?= showError('userRole', $errors) ?>
             </div>
@@ -110,8 +103,8 @@ function showError($field, $errors){
             <h1>Login Account</h1>
             <div class="inputHandler">
                 <label for="loginEmail">Email</label>
-                <input type="email" id="loginEmail" name="loginEmail" 
-                value="<?= htmlspecialchars($old['loginEmail'] ?? '') ?>">
+                <input type="email" id="loginEmail" name="loginEmail"
+                    value="<?= htmlspecialchars($old['loginEmail'] ?? '') ?>">
                 <?= showError('loginEmail', $errors) ?>
             </div>
 
@@ -124,13 +117,12 @@ function showError($field, $errors){
             </div>
             <p>Don't have an account? <a href="#" onclick="showForm('registrationOfAccountForm'); return false;">Register Here</a></p>
 
-            <button type="submit" name="loginAccount">login</button>
+            <button type="submit" name="loginAccount">login</button><br>
+            <a href="verifyEmail.php">forgot password</a>
         </form>
     </div>
 
-    <script src="script.js">
-        alert("JavaScript is working!");
-    </script>
+    <script src="script.js"></script>
 </body>
 
 </html>

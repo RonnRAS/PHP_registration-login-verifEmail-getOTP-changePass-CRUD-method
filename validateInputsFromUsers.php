@@ -1,5 +1,32 @@
 <?php
 require "config.php";
+function showError($field, $errors)
+{
+
+    if (!empty($errors[$field])) {
+        return "<p class='errorHandler' style='color:red;'>" . htmlspecialchars($errors[$field]) . "</p>";
+    } else {
+        return "<p class='errorHandler'></p>";
+    }
+}
+
+function redirectWithErrors ($errors, $activeForm, $redirectTo){
+    if (!empty(array_filter($errors))) {
+        $_SESSION['errors'] = $errors;
+        $_SESSION['active_form'] = $activeForm;
+        $_SESSION['old'] = $_POST;
+
+        header("Location: $redirectTo");
+        exit();
+    }
+
+}
+
+function redirectWithForm($toActive, $toNewlocation){
+    $_SESSION['active_form'] = $toActive;
+    header("Location: $toNewlocation");
+    exit();
+}
 
 function checkInput($value, $rules, $conn = null)
 {
@@ -46,23 +73,32 @@ function checkInput($value, $rules, $conn = null)
 
 
         if ($checkEmail->num_rows > 0) {
-            return $rules['properties'] .  " Email is already registered.";
+            return $rules['properties'] .  " is already registered.";
         }
     }
-    if(isset($rules['emailMustExists'])){
-        $stmt = $conn ->prepare("SELECT email FROM tbl1_users WHERE email = ?");
-        $stmt -> bind_param('s', $value);
-        $stmt -> execute();
+
+    // LOGIN AREA
+    //check if the email is registered
+    if (isset($rules['emailMustExists'])) {
+        $stmt = $conn->prepare("SELECT email FROM tbl1_users WHERE email = ?");
+        $stmt->bind_param('s', $value);
+        $stmt->execute();
         $checkEmail = $stmt->get_result();
-        
-        if($checkEmail->num_rows === 0){
-            return $rules['properties'] .  " Email is not registered.";
+
+        if ($checkEmail->num_rows === 0) {
+            return $rules['properties'] .  " is not registered.";
         }
     }
 }
 
-    $errors = [];
+//array of errors
+$errors = [];
 
+
+
+//===========================================================================================================
+// REGISTER ACCOUNT
+//===========================================================================================================
 
 if (isset($_POST["RegisterAccount"])) {
 
@@ -85,60 +121,56 @@ if (isset($_POST["RegisterAccount"])) {
     $errors['userRole'] = checkInput($_POST['userRole'] ?? '', ['properties' => 'Role', 'option' => true]);
     $errors['registerPassword'] = checkInput($_POST['registerPassword'], ['properties' => 'Password', 'required' => true, 'minLength' => 9, 'upperCase' => true, 'haveNum' => true, 'specialChar' => true]);
 
-    if (!empty(array_filter($errors))) {
-        $_SESSION['errors'] = $errors;
-        $_SESSION['active_form'] = 'registrationOfAccountForm';
-        $_SESSION['old'] = $_POST;
-
-        header("Location: index.php");
-        exit();
-    }
+    redirectWithErrors($errors, 'registrationOfAccountForm', 'index.php');
 
     $stmt = $conn->prepare("INSERT INTO tbl1_users (firstName, middleName, lastName, sex, email, role_type, password) VALUES (?,?,?,?,?,?,?)");
     $stmt->bind_param('sssssss', $firstName, $middleName, $lastName, $userSex, $userEmail, $userRole, $passwordhashed);
     $stmt->execute();
 
-    $_SESSION['active_form'] = 'loginAccountForm';
-    header("Location: index.php");
-    exit();
+
+    redirectWithForm('loginAccountForm', 'index.php');
 }
+
+//===========================================================================================================
+// lOGIN ACCOUNT
+//===========================================================================================================
 
 if (isset($_POST["loginAccount"])) {
     $loginEmail = $_POST["loginEmail"];
     $loginPassword = $_POST["loginPassword"];
 
     $errors['loginEmail'] = checkInput($_POST['loginEmail'], ['properties' => 'Email', 'required' => true, 'emailMustExists' => true], $conn);
-    $errors['loginPassword'] = checkInput($_POST['loginPassword'],['properties' => 'Password', 'required' => true]);
+    $errors['loginPassword'] = checkInput($_POST['loginPassword'], ['properties' => 'Password', 'required' => true]);
 
-    if(!empty(array_filter($errors))){
-        $_SESSION['errors'] = $errors;
-        $_SESSION['active_form'] = 'loginAccountForm';
-        $_SESSION['old'] = $_POST;
+    
+    redirectWithErrors($errors, 'loginAccountForm', 'index.php');
 
-        header("Location: index.php");
-        exit();
-    }
-
-    $stmt = $conn -> prepare("SELECT * FROM tbl1_users WHERE email = ?");
-    $stmt -> bind_param('s', $loginEmail);
-    $stmt -> execute();
+    $stmt = $conn->prepare("SELECT * FROM tbl1_users WHERE email = ?");
+    $stmt->bind_param('s', $loginEmail);
+    $stmt->execute();
     $result = $stmt->get_result();
     $userData = $result->fetch_assoc();
 
-    if (!$userData || !password_verify($loginPassword, $userData['password'])){
-        $_SESSION['errors'] = ['loginPassword' => 'Invalid Email or Password!'];
-        $_SESSION['active_form'] = 'loginAccountForm';
-        $_SESSION['old'] = $_POST;
+    if (!$userData || !password_verify($loginPassword, $userData['password'])) {
 
-        header("Location: index.php");
-        exit();
+        redirectWithErrors(['loginPassword' => 'Invalid Email or Password!'], 'loginAccountForm', 'index.php');
     }
-    
-    if($userData['role_type'] === 'Admin'){
+
+    if ($userData['role_type'] === 'Admin') {
         header("Location: adminDashboard.php");
-    }else if($userData['role_type'] === 'User'){
+    } else if ($userData['role_type'] === 'User') {
         header("Location: userDashboard.php");
     }
     exit();
+}
 
+
+if (isset($_POST['verifyEmailAccount'])) {
+    $verifyEmail = $_POST['verifyEmail'];
+
+    $errors['verifyEmail'] = checkInput($_POST['verifyEmail'], ['properties' => 'Email', 'required' => true, 'emailMustExists' => true], $conn);
+
+    redirectWithErrors($errors, 'verifyEmailAccount', 'verifyEmail.php');
+
+    redirectWithForm('otpVerifyForm', 'verifyEmail.php');
 }
