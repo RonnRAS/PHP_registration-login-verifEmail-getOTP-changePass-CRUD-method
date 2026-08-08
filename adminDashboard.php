@@ -1,3 +1,11 @@
+<?php 
+session_start();
+include "validateInputsFromUsers.php";
+sendBack('Admin');
+
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,5 +15,7 @@
 </head>
 <body>
     <h1>ADMIN DASHBOARD</h1>
+
+    <a onclick = "window.location.href = 'logout.php' ">logout</a>
 </body>
 </html>

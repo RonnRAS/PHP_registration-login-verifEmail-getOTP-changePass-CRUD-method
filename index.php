@@ -2,14 +2,23 @@
 session_start();
 include "validateInputsFromUsers.php";
 
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+
+if(isset($_SESSION['user_id'])){
+    if ($_SESSION['role_type'] === 'Admin') {
+        header("Location: adminDashboard.php");
+        exit();
+    } else if ($_SESSION['role_type'] === 'User') {
+        header("Location: userDashboard.php");
+        exit();
+    }
+}
+
 $errors = $_SESSION['errors'] ?? [];
 $activeForm = $_SESSION['active_form'] ?? 'loginAccountForm';
 $old = $_SESSION['old'] ?? [];
-session_unset();
-
-
-
-
+unset($_SESSION['errors'], $_SESSION['active_form'], $_SESSION['old']);
 
 ?>
 
@@ -39,9 +48,11 @@ session_unset();
             <div class="inputHandler">
                 <label for="middleName">Middle name</label>
                 <input type="text" id="middleName" name="middleName"
-                    value="<?= htmlspecialchars($old['middleName'] ?? '') ?>">
-                <input type="checkbox" class="NoMiddleName">
-                <label for="NoMiddleName">No middle name</label>
+                    value="<?= htmlspecialchars($old['middleName'] ?? '') ?>"
+                    <?= htmlspecialchars($old['noMiddleName'] ?? '') === 'on' ? 'disabled' : '' ?>>
+                <input type="checkbox" id="noMiddleName" name="noMiddleName" value="on" 
+                <?=  htmlspecialchars($old['noMiddleName'] ?? '') === 'on' ? 'checked' : '' ?>>
+                <label for="noMiddleName">No middle name</label>
                 <?= showError('middleName', $errors) ?>
             </div>
 
@@ -72,11 +83,11 @@ session_unset();
 
             <div class="inputHandler">
                 <label for="userRole">Role</label>
-                <input type="radio" id="admin" name="userRole" value="admin"
-                    <?= ($old['userRole'] ??  '') === 'admin' ? 'checked' : '' ?>>
+                <input type="radio" id="admin" name="userRole" value="Admin"
+                    <?= ($old['userRole'] ??  '') === 'Admin' ? 'checked' : '' ?>>
                 <label for="admin">Admin</label>
-                <input type="radio" id="user" name="userRole" value="user"
-                    <?= ($old['userRole'] ?? '') === 'user' ? 'checked' : '' ?>>
+                <input type="radio" id="user" name="userRole" value="User"
+                    <?= ($old['userRole'] ?? '') === 'User' ? 'checked' : '' ?>>
                 <label for="user">User</label>
                 <?= showError('userRole', $errors) ?>
             </div>
@@ -122,7 +133,7 @@ session_unset();
         </form>
     </div>
 
-    <script src="script.js"></script>
+    <script src="tanga.js"></script>
 </body>
 
 </html>

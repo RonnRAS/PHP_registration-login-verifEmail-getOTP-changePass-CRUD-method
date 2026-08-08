@@ -4,7 +4,7 @@ session_start();
 include "validateInputsFromUsers.php";
 
 $errors = $_SESSION['errors'] ?? [];
-$activeForm = $_SESSION['active_form'] ?? 'verifyEmailAccount';
+$activeForm = $_SESSION['active_form'] ?? 'verifyEmailAccountForm';
 $old = $_SESSION['old'] ?? [];
 
 session_unset();
@@ -21,7 +21,7 @@ session_unset();
     <title>Verify Email</title>
 </head>
 <body>
-    <div class="auth-card   <?= $activeForm === 'verifyEmailAccount' ? 'd-block' : 'd-none' ?>">
+    <div class="auth-card   <?= $activeForm === 'verifyEmailAccountForm' ? 'd-block' : 'd-none' ?>">
         <form action="<?= htmlspecialchars($_SERVER['PHP_SELF'])?>" method="POST">
             <h1>Find Your Account</h1>
 
@@ -42,8 +42,10 @@ session_unset();
             <p>We've e-mailed you a 6 digit code. Please check your e-mail and enter the code here to complete the verification.</p>
                 <!--email -->
                 <input type="text" placeholder="••••••" name="otpCode">
-
+                <!--TIMEr for another request of OTP CODE -->
                 <button type="submit" name="verifyOtpCode">verify</button>
+                <?= showError('otpCode', $errors) ?>
+
         </form>
     </div>
     <script src="script.js"></script>
